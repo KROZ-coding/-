@@ -1,5 +1,7 @@
 # 上市公司年报风险智能识别系统
 
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+
 > **版本：v5.3 GA（`pyproject.toml` version = 5.3.0）｜ 865 个单元测试**
 > 2026年北京市大学生数智会计创新应用竞赛 · 智能审计赛道参赛项目
 
@@ -52,14 +54,9 @@ flowchart LR
 ### 环境要求
 - Windows 10/11
 - Python 3.10 及以上版本
-- VC++ 运行库（项目目录已附带 `VC_redist.x64.exe`）
+- VC++ 运行库（缺失时请从微软官网安装 Visual C++ Redistributable x64）
 
-### 一键启动（推荐）
-1. 双击 `前置库安装.bat`（首次运行，自动配置环境和依赖）
-2. 双击 `启动.bat`（后续日常运行）
-3. 浏览器将自动打开 http://localhost:5000
-
-### 手动复现（开发者/评委）
+### 标准启动（推荐）
 ```bash
 # 1. 安装 uv 包管理器（若未安装）
 pip install uv
@@ -67,13 +64,17 @@ pip install uv
 # 2. 一键同步全部依赖（基于 pyproject.toml + uv.lock）
 uv sync --locked
 
-# 3. 配置环境变量（复制模板并填入真实 API Key）
+# 3. 配置环境变量（复制模板并填入你的 DeepSeek API Key）
 cp .env.example .env
-# 编辑 .env，将 OPENAI_API_KEY 替换为真实的 DeepSeek API Key
+# 编辑 .env，将 OPENAI_API_KEY 替换为你的 DeepSeek API Key
 
-# 4. 启动服务
+# 4. 首次运行前构建知识库向量索引（已有 .chroma_db 可跳过）
+uv run python scripts/init_knowledge_base.py
+
+# 5. 启动服务
 uv run python src/main.py -m http -p 5000
 ```
+浏览器打开 http://localhost:5000 即可使用。
 
 ### 效果评估复现
 ```bash
@@ -123,7 +124,7 @@ projects/
 │   ├── maintenance_cli.py         # 运行时资源回收 CLI（默认 dry-run）
 │   ├── pack_source.py             # 源码交付包打包
 │   └── check_audit_release.py     # 发布前离线验收
-├── docs/                          # 技术报告 / 项目计划书 / 源代码与 API 文档
+├── docs/                          # 技术报告 / 项目计划书 / 源代码文档 / 财务公式
 ├── config/
 │   └── agent_llm_config.json      # LLM 配置 + 系统提示词（含思维链推理）
 ├── knowledge_base/                # 审计法规知识库（txt，来源见 DATA_SOURCES.md）
@@ -228,45 +229,34 @@ curl http://localhost:5000/api/maintenance/status
 | 技术报告 | `docs/技术报告.md` | 代码实现原理与框架、前后端实现、API 调用、非平凡逻辑、算法与部署 |
 | 项目计划书 | `docs/项目计划书.md` | 项目框架、预期目标、拟解决的问题、落地可行性与效果评估 |
 | Python 源代码文档 | `docs/Python源代码文档.md` | 按模块的公开类/函数用途、入参、出参 |
-| 源代码清单 | `docs/源代码清单.txt` | `src/` `scripts/` `tests/` 全部 Python 文件、行数与职责 |
-| API 接口清单 | `docs/API接口清单.txt` | 21 个路由 + 17 项工具链 + 16 个 LLM 工具 + SSE 事件 |
-| 环境变量与常量 | `docs/环境变量与常量.txt` | 全部环境变量与关键算法常量（阈值、权重、模型参数） |
-| 快速上手 | `快速上手.txt` | 面向评委的零门槛操作说明 |
+| 单份年报完整分析 | `docs/exec-plan-单份年报完整分析.md` | 固定工具链执行清单与验收校验 |
 | 数据来源 | `DATA_SOURCES.md` | 知识库语料来源与授权说明 |
 | 财务公式 | `docs/financial_formulas.md` | 指标公式与口径细节 |
 
-## 📦 部署包与校验
+> 面向评委的《快速上手》《源代码清单》《API 接口清单》《环境变量与常量》等竞赛交付文档随交付包分发，不随本仓库分发。
 
-源码交付包和服务器部署包均位于 `dist/`；服务器部署包由 `scripts/pack.sh` 按历史方式生成。命名规则为 `audit-ai_v5.3GA_<kind>_<时间戳>.<扩展名>`：
+## 📦 打包交付（可选）
 
-| 包 | 文件 | 用途 | SHA-256 |
-|---|---|---|---|
-| 源码交付包（v5.3） | `dist/audit-ai_v5.3GA_src_20260919_153457.zip` | 竞赛提交与审阅（白名单打包，已排除密钥与运行产物） | `C0765B8916139BC4F1A3C75A39DFF252CABC5853BB465B35AF44C8208D912FD2` |
-| 服务器部署包（v5.3） | `dist/audit-ai_v5.3GA_20260919_153457.tar.gz` | Linux 服务器 / 容器部署（解包后 `bash scripts/setup.sh`） | `B4459D2B82F37C89FC8DDA03C64A6E6380FCB1B841E425F7B565CFF1A02769DD` |
-| 源码交付包 | `dist/audit-ai_v5.0GA_src_20260912_161342.zip` | 竞赛提交与审阅（白名单打包，已排除密钥与运行产物） | `9A6D695F8DD29B9661238EF3C5DD6F2B28C9C152539DCC515C3AB5BDBF9B13E3` |
-| 服务器部署包 | `dist/audit-ai_v5.0GA_server_20260912_161344.tar.gz` | Linux 服务器 / 容器部署（解包后 `bash scripts/setup.sh`） | `592600D4B2B96EC61EB6618315A91CD437FABA47A92C8FAC16AC52DF79826233` |
-
-> `dist/` 下历史包仅供演进对比。**历史解包目录内可能存在带真实 API Key 的 `.env`**，不得整目录打包或上传；若曾暴露请立即在服务商后台吊销该 Key。
-> 表格中的 `v5.0GA` 文件为历史包，保留原文件名与哈希，不代表当前发布版本。
-> 两份新包均已断言不含 `.env` / `*.db` / `checkpoints.sqlite` / `.tmp_*` / 运行产物（reports、charts）。
-> 由于交付包内也有一份 README，包内记录的哈希必然滞后一次打包；**权威校验值以 `dist/SHA256SUMS.txt` 为准**（`sha256sum -c` 可直接核对）。
-
-### 重新打包
+源码交付包与服务器部署包通过脚本生成，产物落在 `dist/`（已由 `.gitignore` 忽略，不入库）：
 
 ```bash
-# 源码交付包
+# 源码交付包（白名单打包，断言不含 .env / *.db / checkpoints.sqlite / .tmp_* / 运行产物）
 python scripts/pack_source.py
 
-# 服务器部署包（Linux / Git Bash）
+# 服务器部署包（Linux / Git Bash；服务器解包后执行 bash scripts/setup.sh）
 bash scripts/pack.sh
 ```
 
-### 运行时资源归零（演示前建议）
+交付前建议生成校验清单：`sha256sum dist/* > dist/SHA256SUMS.txt`（核对：`sha256sum -c dist/SHA256SUMS.txt`）。
+演示前如需将运行时产物归零，见上方「🧹 运行时资源定期回收」。
 
-```bash
-python scripts/maintenance_cli.py --dry-run   # 预览将被回收的检查点/产物/日志/临时文件
-python scripts/maintenance_cli.py --apply     # 真正执行
-```
+## 📄 开源协议
+
+本项目以 [MIT License](LICENSE) 协议开源。
+
+要点摘要（中文仅供参考，法律效力以 [LICENSE](LICENSE) 英文原文为准）：任何人均可免费获取、使用、复制、修改、合并、发布、分发、再许可及销售本软件及其文档，唯须在软件的所有副本或实质部分中保留原版权声明与本许可声明；软件按「现状」提供，不作任何明示或默示的担保，作者或版权持有人不对因使用软件而产生的任何索赔、损害或其他责任负责。
+
+Copyright (c) 2026 AuditAI Dev
 
 ## ⚠️ 免责声明
 本系统分析结果由 AI 辅助生成，仅供审计参考与风险提示，不构成最终审计意见或投资建议。
